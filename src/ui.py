@@ -6,9 +6,34 @@ Shows the active policy layer clearly in the interface, as required by the bount
 """
 
 import gradio as gr
-from src.agent import create_agent, create_hedera_client, get_policy_statuses
 import os
 import json
+
+# Lazy-import agent module (heavy deps: hedera-agent-kit, hiero-sdk-python)
+# This allows the app to run in demo mode without those packages installed
+try:
+    from src.agent import create_agent, create_hedera_client, get_policy_statuses
+    _HAS_AGENT = True
+except ImportError:
+    _HAS_AGENT = False
+    def get_policy_statuses():
+        return [
+            {"policy": "SpendLimitPolicy", "max_per_tx_hbar": float(os.getenv("POLICY_MAX_PER_TX", "10.0")),
+             "daily_limit_hbar": float(os.getenv("POLICY_DAILY_LIMIT", "100.0")),
+             "daily_used_hbar": 0.0, "daily_remaining_hbar": float(os.getenv("POLICY_DAILY_LIMIT", "100.0")),
+             "transaction_count_24h": 0},
+            {"policy": "WhitelistPolicy", "count": len([a for a in os.getenv("POLICY_WHITELIST", "").split(",") if a.strip()]),
+             "allowed_recipients": [a.strip() for a in os.getenv("POLICY_WHITELIST", "").split(",") if a.strip()]},
+            {"policy": "RateLimitPolicy", "max_count": int(os.getenv("POLICY_RATE_MAX", "10")),
+             "window_seconds": int(os.getenv("POLICY_RATE_WINDOW", "60")), "current_count": 0,
+             "remaining": int(os.getenv("POLICY_RATE_MAX", "10"))},
+            {"policy": "TimeWindowPolicy", "start_hour_utc_offset": int(os.getenv("POLICY_TIME_START", "0")),
+             "end_hour_utc_offset": int(os.getenv("POLICY_TIME_END", "24")),
+             "timezone_offset": int(os.getenv("POLICY_TZ_OFFSET", "0")),
+             "current_local_hour": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).hour,
+             "allow_weekends": os.getenv("POLICY_ALLOW_WEEKENDS", "true").lower() == "true",
+             "transfers_allowed_now": True},
+        ]
 
 # Lazy-loaded singletons
 _agent = None
