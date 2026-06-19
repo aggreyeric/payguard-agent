@@ -34,6 +34,10 @@ except ImportError:
              "allow_weekends": os.getenv("POLICY_ALLOW_WEEKENDS", "true").lower() == "true",
              "transfers_allowed_now": True},
         ]
+    def create_hedera_client(network="testnet"):
+        raise RuntimeError("hedera-agent-kit not installed — running in demo mode")
+    def create_agent(client):
+        raise RuntimeError("hedera-agent-kit not installed — running in demo mode")
 
 # Lazy-loaded singletons
 _agent = None
@@ -228,7 +232,6 @@ def build_ui():
     """Build the Gradio interface."""
     with gr.Blocks(
         title="PayGuard — Policy-Constrained Payment Agent",
-        theme=gr.themes.Soft(),
     ) as demo:
         gr.Markdown(
             "# 🛡️ PayGuard — Policy-Constrained Payment Agent on Hedera\n"
@@ -257,8 +260,6 @@ def build_ui():
                         "What policies are currently active?",
                         "Create a new HCS topic for audit logging",
                     ],
-                    retry_btn=None,
-                    undo_btn=None,
                 )
 
             # Right: Policy Dashboard
