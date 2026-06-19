@@ -38,23 +38,32 @@ class WhitelistPolicy(AbstractPolicy):
     @property
     def relevant_tools(self) -> List[str]:
         return [
-            "transfer_hbar",
-            "transfer_hbar_with_allowance",
+            "transfer_hbar_tool",
+            "transfer_hbar_with_allowance_tool",
             "airdrop_fungible_token",
             "transfer_fungible_token_with_allowance",
         ]
 
     def _get_recipients(self, params: Any) -> list[str]:
-        """Extract recipient account IDs from normalized transfer params."""
+        """Extract recipient account IDs from normalized transfer params.
+
+        Only returns accounts receiving HBAR (positive amounts) — the sender's
+        own account (negative amount) is excluded so it isn't flagged by the
+        whitelist.
+        """
         recipients = []
         try:
             normalized = params.normalized_params
+            transfers = None
             if hasattr(normalized, "hbar_transfers"):
-                for account_id in normalized.hbar_transfers.keys():
-                    recipients.append(str(account_id))
+                transfers = normalized.hbar_transfers
             elif hasattr(normalized, "hbar_approved_transfers"):
-                for account_id in normalized.hbar_approved_transfers.keys():
-                    recipients.append(str(account_id))
+                transfers = normalized.hbar_approved_transfers
+            if transfers:
+                for account_id, amount in transfers.items():
+                    # Recipients have positive (incoming) amounts; sender is negative.
+                    if amount and amount > 0:
+                        recipients.append(str(account_id))
         except Exception as e:
             logger.warning(f"WhitelistPolicy: could not parse recipients: {e}")
         return recipients

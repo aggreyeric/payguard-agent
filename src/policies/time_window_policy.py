@@ -60,8 +60,8 @@ class TimeWindowPolicy(AbstractPolicy):
     @property
     def relevant_tools(self) -> List[str]:
         return [
-            "transfer_hbar",
-            "transfer_hbar_with_allowance",
+            "transfer_hbar_tool",
+            "transfer_hbar_with_allowance_tool",
             "create_token",
             "airdrop_fungible_token",
         ]

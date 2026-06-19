@@ -52,8 +52,8 @@ class SpendLimitPolicy(AbstractPolicy):
     @property
     def relevant_tools(self) -> List[str]:
         return [
-            "transfer_hbar",
-            "transfer_hbar_with_allowance",
+            "transfer_hbar_tool",
+            "transfer_hbar_with_allowance_tool",
         ]
 
     def _get_transfer_amount(self, params: Any) -> float:

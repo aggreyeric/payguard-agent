@@ -79,10 +79,21 @@ def create_hedera_client(network: str = "testnet") -> Client:
             "HEDERA_ACCOUNT_ID and HEDERA_PRIVATE_KEY must be set in .env"
         )
 
+    # Parse private key — auto-detect ECDSA (EVM-style 32-byte keys) vs Ed25519.
+    raw = private_key.strip()
+    hexclean = raw[2:] if raw.startswith("0x") else raw
+    try:
+        if len(hexclean) == 64:  # 32-byte raw key → treat as ECDSA
+            parsed_key = PrivateKey.from_bytes_ecdsa(bytes.fromhex(hexclean))
+        else:
+            parsed_key = PrivateKey.from_string(private_key)
+    except Exception:
+        parsed_key = PrivateKey.from_string(private_key)
+
     client = Client(Network(network=network))
     client.set_operator(
         AccountId.from_string(account_id),
-        PrivateKey.from_string(private_key),
+        parsed_key,
     )
     return client
 
@@ -169,7 +180,16 @@ def create_agent(client: Client):
         configuration=configuration,
     )
 
-    tools = toolkit.get_tools()
+    all_tools = toolkit.get_tools()
+    # Expose only the tools the demo needs — keeps Groq free-tier token budget
+    # in check while the policies still gate every transfer at the hook layer.
+    _DEMO_TOOL_NAMES = {
+        "transfer_hbar_tool",
+        "transfer_hbar_with_allowance_tool",
+        "submit_topic_message_tool",
+        "create_topic_tool",
+    }
+    tools = [t for t in all_tools if t.name in _DEMO_TOOL_NAMES]
 
     # Choose LLM
     if os.getenv("GROQ_API_KEY"):
