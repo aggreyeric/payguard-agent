@@ -1,0 +1,4 @@
+﻿# Lightweight requirements for HF Space demo mode
+# Full hedera-agent-kit is only needed for live mode (add separately for production)
+gradio>=5.0.0
+python-dotenv>=1.0.0
