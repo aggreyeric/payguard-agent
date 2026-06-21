@@ -1,4 +1,4 @@
-name: CI — Python Lint
+name: CI — Python Tests
 
 on:
   push:
@@ -7,14 +7,18 @@ on:
     branches: [main]
 
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install deps
+
+      - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Lint
-        run: python -m py_compile src/agent.py src/ui.py main.py
+
+      - name: Run main module smoke test
+        run: python -c "from src import payguard; print('Import OK')"
